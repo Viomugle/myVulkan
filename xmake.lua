@@ -1,9 +1,15 @@
 add_rules("mode.debug", "mode.release")
-
+set_languages("c++23")
+set_toolchains("clang")
+add_requires("glfw")
+add_requires("glm")
+add_requires("vulkan")
 target("myVulkan")
     set_kind("binary")
     add_files("src/*.cpp")
-
+    add_packages("glfw")
+    add_packages("glm")
+    add_packages("vulkan")
 --
 -- If you want to known more usage about xmake, please see https://xmake.io
 --
