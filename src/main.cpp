@@ -112,6 +112,8 @@ private:
 
   std::vector<VkImageView> swapChainImageViews;
 
+  VkPipelineLayout pipelineLayout;
+
   void initWindow() {
     glfwInit();
 
@@ -129,6 +131,7 @@ private:
     createLogicalDevice();
     createSwapChain();
     createImageViews();
+    createRenderPass();
     createGraphicsPipeline();
   }
 
@@ -637,12 +640,54 @@ private:
       colorBlendAttachment.colorBlendOp=VK_BLEND_OP_ADD;
       colorBlendAttachment.srcAlphaBlendFactor=VK_BLEND_FACTOR_ONE;
       colorBlendAttachment.dstAlphaBlendFactor=VK_BLEND_FACTOR_ZERO;
-      
+
       VkPipelineColorBlendStateCreateInfo colorBlending{};
+      colorBlending.sType=VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+      colorBlending.logicOpEnable=VK_FALSE;
+      colorBlending.logicOp=VK_LOGIC_OP_COPY;
+      colorBlending.pAttachments=ptr(colorBlendAttachment);
+      colorBlending.attachmentCount=1;
+      colorBlending.blendConstants[0]=0.0f;
+      colorBlending.blendConstants[1]=0.0f;
+      colorBlending.blendConstants[2]=0.0f;
+      colorBlending.blendConstants[3]=0.0f;
+
+      VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+      pipelineLayoutInfo.sType=VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+      pipelineLayoutInfo.setLayoutCount=0;
+      pipelineLayoutInfo.pSetLayouts=nullptr;
+      pipelineLayoutInfo.pushConstantRangeCount=0;
+      pipelineLayoutInfo.pPushConstantRanges=nullptr;
+
+      if(vkCreatePipelineLayout(device,ptr(pipelineLayoutInfo),nullptr,ptr(pipelineLayout))!=VK_SUCCESS)
+      {
+          throw std::runtime_error("failed to create pipeline layout");
+      }
+  }
+
+  void createRenderpass()
+  {
+      VkAttachmentDescription colorAttachment{};
+      colorAttachment.format=swapChainImageFormat;
+      colorAttachment.samples=VK_SAMPLE_COUNT_1_BIT;
+      colorAttachment.loadOp=VK_ATTACHMENT_LOAD_OP_CLEAR;
+      colorAttachment.storeOp=VK_ATTACHMENT_STORE_OP_STORE;
+
+      colorAttachment.stencilLoadOp=VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+      colorAttachment.stencilStoreOp=VK_ATTACHMENT_STORE_OP_DONT_CARE;
+      colorAttachment.initialLayout=VK_IMAGE_LAYOUT_UNDEFINED;
+      colorAttachment.finalLayout=VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+      VkAttachmentReference colorAttachmentRef{};
+      colorAttachmentRef.attachment=0;
+      colorAttachmentRef.layout=VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
       
-
-
-
+      VkSubpassDescription subpass{};
+      subpass.pipelineBindPoint=VK_PIPELINE_BIND_POINT_GRAPHICS;
+      subpass.colorAttachmentCount=1;
+      subpass.pColorAttachments=ptr(colorAttachmentRef);
+      
+    
   }
 
   static std::vector<char> readFile(const std::string &filename) {
